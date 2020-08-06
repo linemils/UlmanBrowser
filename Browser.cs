@@ -31,10 +31,10 @@ namespace UlmanBrowser
         private void InitializeBrowser()
         {
             Cef.Initialize(new CefSettings());
-            browser = new ChromiumWebBrowser("https://datorium.eu");
-            browser.Dock = DockStyle.Fill;
-            browserTabs.TabPages[0].Controls.Add(browser);
-            browser.AddressChanged += Browser_AddressChanged;
+            AddBrowserTab();
+
+            //browserTabs.TabPages[0].Dispose();
+            browserTabs.TabPages[0].Dispose();
         }
 
         private void toolStripButtonGo_Click(object sender, EventArgs e)
@@ -51,15 +51,7 @@ namespace UlmanBrowser
         {
             browser.Forward();
         }
-        private void Browser_AddressChanged(object sender, AddressChangedEventArgs e)
-        {
-            //var selectedBrowser = (ChromiumWebBrowser)sender;
 
-            this.Invoke(new MethodInvoker(() =>
-            {
-                toolStripAddressBar.Text = e.Address;
-            }));
-        }
 
         private void toolStripButtonReload_Click(object sender, EventArgs e)
         {
@@ -78,12 +70,50 @@ namespace UlmanBrowser
         {
             try
             {
-                browser.Load(address);
+                var selectedBrowser = (ChromiumWebBrowser)browserTabs.SelectedTab.Controls[0];
+
+                selectedBrowser.Load(address);
             }
             catch
             {
 
             }
+        }
+
+
+        private void toolStripButtonAddTab_Click(object sender, EventArgs e)
+        {
+            AddBrowserTab();
+            browserTabs.SelectedTab = browserTabs.TabPages[browserTabs.TabPages.Count - 1];
+        }
+        private void AddBrowserTab()
+        {
+            var newTabPage = new TabPage();
+            newTabPage.Text = "New Tab";
+            browserTabs.TabPages.Add(newTabPage);
+
+            browser = new ChromiumWebBrowser("https://datorium.eu");
+            browser.Dock = DockStyle.Fill;
+            browser.AddressChanged += Browser_AddressChanged;
+            browser.TitleChanged += Browser_TitleChanged;
+            newTabPage.Controls.Add(browser);
+        }
+        private void Browser_TitleChanged(object sender, TitleChangedEventArgs e)
+        {
+            var selectedBrowser = (ChromiumWebBrowser)sender;
+            this.Invoke(new MethodInvoker(() =>
+            {
+                selectedBrowser.Parent.Text = e.Title;
+            }));
+        }
+        private void Browser_AddressChanged(object sender, AddressChangedEventArgs e)
+        {
+            //var selectedBrowser = (ChromiumWebBrowser)sender;
+
+            this.Invoke(new MethodInvoker(() =>
+            {
+                toolStripAddressBar.Text = e.Address;
+            }));
         }
     }
 }
